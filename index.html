@@ -42,6 +42,7 @@
       }
 
       .page {
+        min-height: 100vh;
         min-height: 100svh;
         display: grid;
         place-items: center;
@@ -307,10 +308,14 @@
           if (reduceMotion.matches) return;
           if (typeof window.confetti === 'function') {
             cancelAnimationFrame(raf);
-            heartShapes ||= ['#f45b93', '#ff83ad', '#ffb2cf'].map(color =>
-              window.confetti.shapeFromText({ text: '♥', color, fontFamily: 'Georgia', scalar: 2 })
-            );
-            confettiHearts ||= window.confetti.create(canvas, { resize: true, disableForReducedMotion: true });
+            if (!heartShapes) {
+              heartShapes = ['#f45b93', '#ff83ad', '#ffb2cf'].map(color =>
+                window.confetti.shapeFromText({ text: '♥', color, fontFamily: 'Georgia', scalar: 2 })
+              );
+            }
+            if (!confettiHearts) {
+              confettiHearts = window.confetti.create(canvas, { resize: true, disableForReducedMotion: true });
+            }
             confettiHearts({
               particleCount: 115,
               spread: 135,
