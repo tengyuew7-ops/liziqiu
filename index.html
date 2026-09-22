@@ -745,14 +745,7 @@
                   accessKey: appConfig.cloudbaseAccessKey,
                 });
               }
-              const auth = cloudApp.auth;
-              const current = await auth.getSession();
-              if (current.error) throw new Error(current.error.message || '读取登录状态失败');
-              if (!current.data || !current.data.session) {
-                const signedIn = await auth.signInAnonymously();
-                if (signedIn.error) throw new Error(signedIn.error.message || '匿名登录失败');
-              }
-              return cloudApp.database();
+              return cloudApp.rdb();
             })();
           }
           return cloudReadyPromise.catch(error => {
@@ -763,15 +756,14 @@
 
         async function recordChoice(food, displayName) {
           const record = {
-            foodId: food.id,
+            food_id: food.id,
             food: food.name,
-            emoji: food.emoji,
             nickname: displayName,
-            visitorId: getVisitorId(),
-            requestId: createId(),
-            clientTime: new Date().toISOString(),
+            visitor_id: getVisitorId(),
+            request_id: createId(),
+            client_time: new Date().toISOString(),
             source: 'github-pages',
-            pageVersion: '2.0',
+            page_version: '2.0',
           };
 
           if (localPreview) {
@@ -784,8 +776,10 @@
           }
 
           const db = await getCloudDatabase();
-          record.createdAt = db.serverDate();
-          await db.collection(appConfig.cloudbaseCollection || 'food_choices').add(record);
+          const result = await db.from(appConfig.cloudbaseTable || 'food_choices').insert(record);
+          if (result.error) {
+            throw new Error(result.error.message || '数据库写入失败');
+          }
         }
 
         function selectFood(food) {
