@@ -4,13 +4,25 @@
 
 ## 1. 创建表和权限
 
-在“SQL 型数据库 → SQL 编辑器”中执行 [`cloudbase-schema.sql`](./cloudbase-schema.sql)。脚本会完成：
+在“SQL 型数据库 → SQL 编辑器”中执行 [`cloudbase-schema.sql`](./cloudbase-schema.sql)。脚本可以重复执行，不会删除已有记录，也不会因表、索引或策略已经存在而失败。脚本会完成：
 
 - 创建 `public.food_choices` 表；
 - 限制可以提交的 12 种美食；
 - 开启 PostgreSQL RLS；
 - 仅授予浏览器 `anon` 角色新增权限；
 - 不授予网页查询、修改或删除权限。
+
+如果旧版脚本提示 `relation "food_choices" already exists (SQLSTATE 42P07)`，说明表已经在第一次执行时创建成功。无需删除表，改用当前脚本即可。
+
+CloudBase SQL 编辑器有时会把 `anon`、`authenticated`、`service_role` 误判为 Supabase 专用角色。它们也是 CloudBase PostgreSQL 官方使用的内置角色。可以先执行以下只读查询确认当前环境中的角色：
+
+```sql
+select rolname, rolcanlogin, rolbypassrls
+from pg_roles
+order by rolname;
+```
+
+当前环境已确认包含这三个角色。
 
 ## 2. 配置 Web 安全域名
 

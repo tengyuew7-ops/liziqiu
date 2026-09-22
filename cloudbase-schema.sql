@@ -1,8 +1,11 @@
 -- Like or Love: food choice records for CloudBase PostgreSQL.
 -- Browser visitors may insert one of the allowed foods, but cannot read,
 -- update, or delete any rows through the public client role.
+-- This migration is safe to run again. Existing rows are preserved.
 
-create table public.food_choices (
+begin;
+
+create table if not exists public.food_choices (
   id bigint generated always as identity primary key,
   food_id varchar(40) not null,
   food varchar(40) not null,
@@ -31,7 +34,7 @@ create table public.food_choices (
   )
 );
 
-create index food_choices_created_at_idx
+create index if not exists food_choices_created_at_idx
   on public.food_choices (created_at desc);
 
 alter table public.food_choices enable row level security;
@@ -45,6 +48,9 @@ grant usage, select on sequence public.food_choices_id_seq to anon;
 grant all on table public.food_choices to service_role;
 grant usage, select on sequence public.food_choices_id_seq to service_role;
 
+drop policy if exists "anonymous visitors can submit food choices"
+  on public.food_choices;
+
 create policy "anonymous visitors can submit food choices"
   on public.food_choices
   for insert
@@ -53,3 +59,5 @@ create policy "anonymous visitors can submit food choices"
 
 comment on table public.food_choices is
   'Food choices submitted from the Like or Love GitHub Pages site.';
+
+commit;
