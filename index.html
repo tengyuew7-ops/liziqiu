@@ -19,6 +19,7 @@
       }
 
       * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
       html, body { min-height: 100%; }
       body {
         margin: 0;
@@ -221,6 +222,209 @@
       .again-button { min-height: 48px; padding: 9px 23px; font-size: .9rem; animation: rise 1s 1.1s both; }
       .particle-layer { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
 
+      .love-intro {
+        min-height: min(600px, 85svh);
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        transition: opacity .38s ease, transform .38s ease;
+      }
+      .love-intro.leaving { opacity: 0; transform: translateY(-18px) scale(.96); }
+      .food-panel {
+        width: min(100%, 720px);
+        animation: enter .72s cubic-bezier(.2,.8,.2,1) both;
+      }
+      .food-card {
+        position: relative;
+        overflow: hidden;
+        padding: clamp(25px, 6vw, 42px) clamp(16px, 4.5vw, 34px) 28px;
+        border: 2px solid #fff;
+        border-radius: 34px;
+        background: linear-gradient(155deg, #fffdfdee, #fff4f9e8);
+        box-shadow: 0 24px 65px #b94a7330, inset 0 0 0 7px #fff6fa;
+      }
+      .food-card::before {
+        content: "";
+        position: absolute;
+        width: 210px;
+        height: 210px;
+        right: -100px;
+        top: -105px;
+        border-radius: 50%;
+        background: #ffb9d367;
+        pointer-events: none;
+      }
+      .mini-heart {
+        display: inline-grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        margin-bottom: 8px;
+        border-radius: 16px;
+        color: #fff;
+        background: linear-gradient(145deg, #ff9fc1, #f15a91);
+        box-shadow: 0 8px 18px #e7548952;
+        font: 34px/1 Georgia, serif;
+        transform: rotate(-7deg);
+      }
+      .food-kicker {
+        margin: 0 0 6px;
+        color: #bd4774;
+        font-size: .75rem;
+        font-weight: 900;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+      }
+      .food-heading {
+        margin: 0;
+        color: #a92e62;
+        font-size: clamp(1.8rem, 7vw, 2.8rem);
+        line-height: 1.15;
+        letter-spacing: -.045em;
+      }
+      .food-heading:focus, .result-title:focus { outline: none; }
+      .food-hint { margin: 9px 0 23px; color: #8e4c69; line-height: 1.55; }
+      .bubble-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 13px 8px;
+        align-items: center;
+        padding: 4px 0 18px;
+      }
+      .bubble-slot {
+        position: relative;
+        display: grid;
+        min-width: 0;
+        place-items: center;
+        animation: bubble-drift var(--float-time, 5.4s) ease-in-out var(--float-delay, 0s) infinite;
+      }
+      .bubble-radio {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      .food-bubble {
+        position: relative;
+        display: flex;
+        width: min(var(--bubble-size, 102px), 100%);
+        aspect-ratio: 1;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        border: 2px solid #fff9;
+        border-radius: 50%;
+        cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        color: #813651;
+        background:
+          radial-gradient(circle at 30% 23%, #fff 0 7%, #ffffff70 8% 13%, transparent 14%),
+          linear-gradient(145deg, var(--bubble-light, #ffe7f0), var(--bubble-dark, #ff9fc1));
+        box-shadow: inset -8px -10px 20px #b8427130, inset 6px 8px 13px #fff9, 0 10px 22px #d4578542;
+        transition: transform .22s cubic-bezier(.2,.9,.3,1.35), box-shadow .22s, filter .22s;
+      }
+      .food-bubble::after {
+        content: "✓";
+        position: absolute;
+        top: 2px;
+        right: 4px;
+        display: grid;
+        width: 27px;
+        height: 27px;
+        place-items: center;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        opacity: 0;
+        transform: scale(.45);
+        color: #fff;
+        background: #dd4e84;
+        box-shadow: 0 4px 10px #b93d6a51;
+        font-size: .82rem;
+        font-weight: 900;
+        transition: opacity .2s, transform .2s;
+      }
+      .bubble-radio:checked + .food-bubble {
+        transform: scale(1.08);
+        border-color: #fff;
+        box-shadow: inset -8px -10px 20px #b8427130, inset 6px 8px 13px #fff9, 0 0 0 5px #f15d9650, 0 14px 28px #c6417861;
+        filter: saturate(1.08);
+      }
+      .bubble-radio:checked + .food-bubble::after { opacity: 1; transform: scale(1); }
+      .bubble-radio:focus-visible + .food-bubble { outline: 3px solid #942452; outline-offset: 4px; }
+      .bubble-icon { font-size: clamp(1.65rem, 7vw, 2.25rem); line-height: 1; }
+      .bubble-name { padding: 0 5px; font-size: .86rem; font-weight: 900; line-height: 1.15; }
+      .choice-dock {
+        position: sticky;
+        bottom: max(10px, env(safe-area-inset-bottom));
+        z-index: 3;
+        display: grid;
+        gap: 12px;
+        margin-top: 8px;
+        padding: 17px;
+        border: 1px solid #fac4d7;
+        border-radius: 23px;
+        text-align: left;
+        background: #fffafbfa;
+        box-shadow: 0 14px 34px #aa3c692d;
+        animation: dock-in .34s cubic-bezier(.2,.9,.3,1.2) both;
+      }
+      .choice-line { margin: 0; font-size: .88rem; color: #99506d; }
+      .choice-line strong { display: block; margin-top: 3px; color: #b83168; font-size: 1.25rem; }
+      .nickname-label { display: grid; gap: 6px; color: #9c466a; font-size: .79rem; font-weight: 800; }
+      .nickname-input {
+        width: 100%;
+        min-height: 44px;
+        padding: 9px 13px;
+        border: 1.5px solid #f3bed2;
+        border-radius: 13px;
+        outline: none;
+        color: #893657;
+        background: #fff;
+        font: 700 .9rem/1.2 inherit;
+      }
+      .nickname-input:focus { border-color: #e45c90; box-shadow: 0 0 0 4px #ffb6d13f; }
+      .choice-actions { display: grid; grid-template-columns: 1fr auto; gap: 9px; }
+      .confirm-button, .change-button, .pick-again-button {
+        min-height: 48px;
+        border: 0;
+        border-radius: 999px;
+        cursor: pointer;
+        touch-action: manipulation;
+        font: 900 .9rem/1.2 inherit;
+      }
+      .confirm-button {
+        padding: 11px 17px;
+        color: #fff;
+        background: linear-gradient(135deg, #ff7faa, #e64e87);
+        box-shadow: 0 7px 0 #cf3c72, 0 12px 21px #cf47783b;
+      }
+      .confirm-button:active { transform: translateY(4px); box-shadow: 0 3px 0 #cf3c72; }
+      .confirm-button:disabled { cursor: wait; opacity: .65; transform: none; }
+      .change-button, .pick-again-button { padding: 10px 16px; color: #ae3c6b; background: #ffe7f0; }
+      .confirm-button:focus-visible, .change-button:focus-visible, .pick-again-button:focus-visible {
+        outline: 3px solid #942452;
+        outline-offset: 3px;
+      }
+      .save-message { min-height: 1.35em; margin: 0; color: #a12f5e; font-size: .82rem; font-weight: 800; text-align: center; }
+      .choice-result {
+        display: grid;
+        justify-items: center;
+        padding: 35px 15px 12px;
+        animation: heart-pop .7s cubic-bezier(.18,1.35,.38,1) both;
+      }
+      .result-emoji { font-size: 5rem; filter: drop-shadow(0 10px 12px #c8537a3b); }
+      .result-title { margin: 10px 0 7px; color: #a92f63; font-size: clamp(1.7rem, 7vw, 2.5rem); }
+      .result-copy { margin: 0 0 20px; color: #8e4c69; }
+      .backend-note { margin: 13px 0 0; color: #aa6a83; font-size: .72rem; line-height: 1.5; }
+
+      @keyframes bubble-drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+      @keyframes dock-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+
       @keyframes enter { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity: 1; transform: none; } }
       @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
@@ -231,6 +435,14 @@
         .seal { width: 72px; height: 72px; font-size: 57px; }
         .intro { margin-bottom: 25px; }
         .code-input { height: 60px; }
+        .stage { padding: 12px 0 24px; }
+        .food-card { border-radius: 27px; }
+        .bubble-grid { gap: 11px 5px; }
+        .food-bubble { width: min(var(--bubble-size, 96px), 100%); }
+        .choice-dock { padding: 14px; }
+      }
+      @media (min-width: 620px) {
+        .bubble-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 10px; }
       }
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
@@ -254,37 +466,149 @@
           <button class="reveal-button" type="submit">打开惊喜 <span aria-hidden="true">♡</span></button>
         </form>
       </section>
-      <section class="stage" id="stage" aria-label="心动惊喜" aria-hidden="true">
-        <span class="heart" aria-hidden="true">♥</span>
-        <h2 class="stage-title">like or love</h2>
-        <p class="stage-subtitle">♡ 一颗心，刚好为你跳动 ♡</p>
-        <button class="again-button" id="again" type="button">再看一次 ♡</button>
+      <section class="stage" id="stage" aria-label="心动惊喜与美食选择" aria-hidden="true">
+        <div class="love-intro" id="loveIntro">
+          <span class="heart" aria-hidden="true">♥</span>
+          <h2 class="stage-title">like or love</h2>
+          <p class="stage-subtitle">♡ 一颗心，刚好为你跳动 ♡</p>
+        </div>
+
+        <section class="food-panel" id="foodPanel" aria-labelledby="foodHeading" hidden>
+          <div class="food-card">
+            <span class="mini-heart" aria-hidden="true">♥</span>
+            <p class="food-kicker">Pick our little date</p>
+            <h2 class="food-heading" id="foodHeading" tabindex="-1">今天吃什么呀？</h2>
+            <p class="food-hint">戳一颗美食气泡，把今天的快乐交给它 ♡</p>
+
+            <div class="bubble-grid" id="bubbleGrid" role="radiogroup" aria-label="选择一种美食"></div>
+
+            <div class="choice-dock" id="choiceDock" hidden>
+              <p class="choice-line">你的心动选择是 <strong id="chosenFood">还没选择</strong></p>
+              <label class="nickname-label" for="nickname">
+                留个昵称，让我知道是你（可选）
+                <input class="nickname-input" id="nickname" type="text" maxlength="20" autocomplete="nickname" placeholder="例如：栗子球" />
+              </label>
+              <div class="choice-actions">
+                <button class="confirm-button" id="confirmChoice" type="button">就吃这个 ♡</button>
+                <button class="change-button" id="changeChoice" type="button">换一个</button>
+              </div>
+              <p class="save-message" id="saveMessage" role="status" aria-live="polite"></p>
+            </div>
+
+            <div class="choice-result" id="choiceResult" hidden>
+              <span class="result-emoji" id="resultEmoji" aria-hidden="true">🍲</span>
+              <h3 class="result-title" id="resultTitle" tabindex="-1">收到啦！</h3>
+              <p class="result-copy" id="resultCopy">今天就吃好吃的 ♡</p>
+              <button class="pick-again-button" id="pickAgain" type="button">再选一次</button>
+            </div>
+            <p class="backend-note" id="backendNote" hidden>当前是本地预览模式，记录只保存在这台设备。</p>
+          </div>
+        </section>
       </section>
     </main>
     <canvas class="particle-layer" id="particles" aria-hidden="true"></canvas>
     <script async src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+    <script defer src="https://static.cloudbase.net/cloudbase-js-sdk/3.10.0/cloudbase.full.js"></script>
+    <script src="./config.js"></script>
     <script>
       (() => {
         const secret = '20040914';
+        const foods = [
+          { id: 'hotpot', name: '火锅', emoji: '🍲', size: 105, light: '#ffe6ee', dark: '#ff8bad' },
+          { id: 'bbq', name: '烤肉', emoji: '🥩', size: 94, light: '#fff0e8', dark: '#ffb08d' },
+          { id: 'sushi', name: '日料', emoji: '🍣', size: 100, light: '#ffe9f0', dark: '#ff9fb7' },
+          { id: 'malatang', name: '麻辣烫', emoji: '🌶️', size: 108, light: '#ffe4e7', dark: '#ff8490' },
+          { id: 'shaokao', name: '烧烤', emoji: '🍢', size: 92, light: '#fff1df', dark: '#ffc17e' },
+          { id: 'pizza', name: '披萨', emoji: '🍕', size: 102, light: '#fff3dc', dark: '#ffd174' },
+          { id: 'noodles', name: '面 / 粉', emoji: '🍜', size: 99, light: '#ffefe2', dark: '#ffb979' },
+          { id: 'fried-chicken', name: '炸鸡', emoji: '🍗', size: 106, light: '#fff0df', dark: '#ffc071' },
+          { id: 'home-cooking', name: '家常菜', emoji: '🍚', size: 98, light: '#ecf5ed', dark: '#a9d6ae' },
+          { id: 'burger', name: '汉堡', emoji: '🍔', size: 92, light: '#fff0df', dark: '#ffc17b' },
+          { id: 'dessert', name: '甜品', emoji: '🍰', size: 103, light: '#ffe8f4', dark: '#f5a4cf' },
+          { id: 'milk-tea', name: '奶茶', emoji: '🧋', size: 96, light: '#f9ebdf', dark: '#dcb596' },
+        ];
+        const appConfig = window.LIZIQIU_CONFIG || {};
         const form = document.getElementById('form');
         const card = document.getElementById('card');
         const input = document.getElementById('code');
         const progress = document.getElementById('progress');
         const message = document.getElementById('message');
         const stage = document.getElementById('stage');
-        const again = document.getElementById('again');
+        const loveIntro = document.getElementById('loveIntro');
+        const foodPanel = document.getElementById('foodPanel');
+        const foodHeading = document.getElementById('foodHeading');
+        const bubbleGrid = document.getElementById('bubbleGrid');
+        const choiceDock = document.getElementById('choiceDock');
+        const chosenFood = document.getElementById('chosenFood');
+        const nickname = document.getElementById('nickname');
+        const confirmChoice = document.getElementById('confirmChoice');
+        const changeChoice = document.getElementById('changeChoice');
+        const saveMessage = document.getElementById('saveMessage');
+        const choiceResult = document.getElementById('choiceResult');
+        const resultEmoji = document.getElementById('resultEmoji');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultCopy = document.getElementById('resultCopy');
+        const pickAgain = document.getElementById('pickAgain');
+        const backendNote = document.getElementById('backendNote');
         const canvas = document.getElementById('particles');
         const ctx = canvas.getContext('2d');
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const localPreview = appConfig.demoMode === true || location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /(?:\?|&)demo=1(?:&|$)/.test(location.search);
+        const backendConfigured = Boolean(appConfig.cloudbaseEnvId && appConfig.cloudbaseAccessKey);
         let raf = 0;
         let pieces = [];
         let confettiHearts = null;
         let heartShapes = null;
+        let introTimer = 0;
+        let selectedFood = null;
+        let cloudApp = null;
+        let cloudReadyPromise = null;
 
         for (let i = 0; i < 8; i++) {
           const span = document.createElement('span');
           span.textContent = '♥';
           progress.append(span);
+        }
+
+        foods.forEach((food, index) => {
+          const label = document.createElement('label');
+          label.className = 'bubble-slot';
+          label.style.setProperty('--bubble-size', food.size + 'px');
+          label.style.setProperty('--float-time', (4.8 + index % 4 * .55) + 's');
+          label.style.setProperty('--float-delay', (-index * .31) + 's');
+
+          const radio = document.createElement('input');
+          radio.className = 'bubble-radio';
+          radio.type = 'radio';
+          radio.name = 'food';
+          radio.value = food.id;
+          radio.setAttribute('aria-label', food.name);
+
+          const bubble = document.createElement('span');
+          bubble.className = 'food-bubble';
+          bubble.style.setProperty('--bubble-light', food.light);
+          bubble.style.setProperty('--bubble-dark', food.dark);
+
+          const icon = document.createElement('span');
+          icon.className = 'bubble-icon';
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = food.emoji;
+
+          const name = document.createElement('span');
+          name.className = 'bubble-name';
+          name.textContent = food.name;
+
+          bubble.append(icon, name);
+          label.append(radio, bubble);
+          bubbleGrid.append(label);
+          radio.addEventListener('change', () => selectFood(food));
+        });
+
+        if (localPreview || !backendConfigured) {
+          backendNote.hidden = false;
+          backendNote.textContent = localPreview
+            ? '当前是本地预览模式，记录只保存在这台设备。'
+            : '选择界面已完成，后台记录服务正在连接中。';
         }
 
         function updateProgress() {
@@ -373,14 +697,166 @@
           draw();
         }
 
+        function createId() {
+          return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+        }
+
+        function getVisitorId() {
+          const key = 'liziqiu-visitor-id';
+          try {
+            let value = localStorage.getItem(key);
+            if (!value) {
+              value = createId();
+              localStorage.setItem(key, value);
+            }
+            return value;
+          } catch (error) {
+            return createId();
+          }
+        }
+
+        function waitForCloudBase() {
+          if (typeof window.cloudbase !== 'undefined') return Promise.resolve();
+          return new Promise((resolve, reject) => {
+            const startedAt = Date.now();
+            const timer = window.setInterval(() => {
+              if (typeof window.cloudbase !== 'undefined') {
+                window.clearInterval(timer);
+                resolve();
+              } else if (Date.now() - startedAt > 8000) {
+                window.clearInterval(timer);
+                reject(new Error('CloudBase SDK 加载失败'));
+              }
+            }, 100);
+          });
+        }
+
+        function getCloudDatabase() {
+          if (!backendConfigured) {
+            return Promise.reject(new Error('CloudBase 尚未配置'));
+          }
+          if (!cloudReadyPromise) {
+            cloudReadyPromise = (async () => {
+              await waitForCloudBase();
+              if (!cloudApp) {
+                cloudApp = window.cloudbase.init({
+                  env: appConfig.cloudbaseEnvId,
+                  region: appConfig.cloudbaseRegion || 'ap-shanghai',
+                  accessKey: appConfig.cloudbaseAccessKey,
+                });
+              }
+              const auth = cloudApp.auth;
+              const current = await auth.getSession();
+              if (current.error) throw new Error(current.error.message || '读取登录状态失败');
+              if (!current.data || !current.data.session) {
+                const signedIn = await auth.signInAnonymously();
+                if (signedIn.error) throw new Error(signedIn.error.message || '匿名登录失败');
+              }
+              return cloudApp.database();
+            })();
+          }
+          return cloudReadyPromise.catch(error => {
+            cloudReadyPromise = null;
+            throw error;
+          });
+        }
+
+        async function recordChoice(food, displayName) {
+          const record = {
+            foodId: food.id,
+            food: food.name,
+            emoji: food.emoji,
+            nickname: displayName,
+            visitorId: getVisitorId(),
+            requestId: createId(),
+            clientTime: new Date().toISOString(),
+            source: 'github-pages',
+            pageVersion: '2.0',
+          };
+
+          if (localPreview) {
+            const key = 'liziqiu-demo-choices';
+            const saved = JSON.parse(localStorage.getItem(key) || '[]');
+            saved.push(record);
+            localStorage.setItem(key, JSON.stringify(saved.slice(-30)));
+            await new Promise(resolve => setTimeout(resolve, 420));
+            return;
+          }
+
+          const db = await getCloudDatabase();
+          record.createdAt = db.serverDate();
+          await db.collection(appConfig.cloudbaseCollection || 'food_choices').add(record);
+        }
+
+        function selectFood(food) {
+          selectedFood = food;
+          chosenFood.textContent = food.emoji + ' ' + food.name;
+          saveMessage.textContent = '';
+          choiceDock.hidden = false;
+          window.setTimeout(() => {
+            choiceDock.scrollIntoView({ block: 'nearest', behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+          }, 40);
+        }
+
+        function clearSelection() {
+          selectedFood = null;
+          Array.from(bubbleGrid.querySelectorAll('input[name="food"]')).forEach(radio => { radio.checked = false; });
+          choiceDock.hidden = true;
+          saveMessage.textContent = '';
+          foodHeading.focus({ preventScroll: true });
+        }
+
+        async function submitChoice() {
+          if (!selectedFood || confirmChoice.disabled) return;
+          const food = selectedFood;
+          const displayName = nickname.value.trim().slice(0, 20);
+          confirmChoice.disabled = true;
+          confirmChoice.textContent = '正在送达…';
+          saveMessage.textContent = '正在把你的选择装进粉色信封 ♡';
+
+          try {
+            await recordChoice(food, displayName);
+            bubbleGrid.hidden = true;
+            choiceDock.hidden = true;
+            choiceResult.hidden = false;
+            resultEmoji.textContent = food.emoji;
+            resultTitle.textContent = '收到啦！今天就吃' + food.name;
+            resultCopy.textContent = displayName ? displayName + ' 的选择已经记下啦 ♡' : '你的选择已经记下啦 ♡';
+            resultTitle.focus({ preventScroll: true });
+            sprinkle();
+          } catch (error) {
+            console.error('保存美食选择失败', error);
+            saveMessage.textContent = backendConfigured
+              ? '暂时没有送达，请检查网络后再试一次 ♡'
+              : '后台记录服务还没连接，请先联系页面主人 ♡';
+          } finally {
+            confirmChoice.disabled = false;
+            confirmChoice.textContent = '就吃这个 ♡';
+          }
+        }
+
+        function showFoodPicker() {
+          loveIntro.classList.add('leaving');
+          window.setTimeout(() => {
+            loveIntro.hidden = true;
+            loveIntro.classList.remove('leaving');
+            foodPanel.hidden = false;
+            foodHeading.focus({ preventScroll: true });
+          }, reduceMotion.matches ? 20 : 380);
+        }
+
         function openSurprise() {
+          input.blur();
           card.hidden = true;
           stage.classList.remove('active');
+          loveIntro.hidden = false;
+          foodPanel.hidden = true;
           void stage.offsetWidth;
           stage.classList.add('active');
           stage.setAttribute('aria-hidden', 'false');
-          again.focus({ preventScroll: true });
           sprinkle();
+          window.clearTimeout(introTimer);
+          introTimer = window.setTimeout(showFoodPicker, reduceMotion.matches ? 180 : 1600);
         }
 
         input.addEventListener('input', updateProgress);
@@ -402,7 +878,13 @@
           card.classList.add('shake');
           input.focus();
         });
-        again.addEventListener('click', openSurprise);
+        confirmChoice.addEventListener('click', submitChoice);
+        changeChoice.addEventListener('click', clearSelection);
+        pickAgain.addEventListener('click', () => {
+          choiceResult.hidden = true;
+          bubbleGrid.hidden = false;
+          clearSelection();
+        });
         window.addEventListener('resize', () => {
           if (stage.classList.contains('active') && !confettiHearts) resizeCanvas();
         });
