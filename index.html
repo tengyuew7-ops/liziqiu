@@ -508,7 +508,6 @@
     </main>
     <canvas class="particle-layer" id="particles" aria-hidden="true"></canvas>
     <script async src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
-    <script defer src="https://static.cloudbase.net/cloudbase-js-sdk/3.10.0/cloudbase.full.js"></script>
     <script src="./config.js"></script>
     <script>
       (() => {
@@ -554,27 +553,23 @@
         const ctx = canvas.getContext('2d');
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
         const localPreview = appConfig.demoMode === true || location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /(?:\?|&)demo=1(?:&|$)/.test(location.search);
-        const bridgeEndpoint = (() => {
-          if (typeof appConfig.cloudbaseBridgeUrl !== 'string' || !appConfig.cloudbaseBridgeUrl.trim()) return null;
+        const apiEndpoint = (() => {
+          if (typeof appConfig.cloudbaseApiUrl !== 'string' || !appConfig.cloudbaseApiUrl.trim()) return null;
           try {
-            const endpoint = new URL(appConfig.cloudbaseBridgeUrl, location.href);
+            const endpoint = new URL(appConfig.cloudbaseApiUrl, location.href);
             return endpoint.protocol === 'https:' ? endpoint : null;
           } catch (error) {
-            console.error('CloudBase 桥接地址无效', error);
+            console.error('CloudBase API 地址无效', error);
             return null;
           }
         })();
-        const directBackendConfigured = Boolean(appConfig.cloudbaseEnvId && appConfig.cloudbaseAccessKey);
-        const backendConfigured = Boolean(bridgeEndpoint || directBackendConfigured);
+        const backendConfigured = Boolean(apiEndpoint);
         let raf = 0;
         let pieces = [];
         let confettiHearts = null;
         let heartShapes = null;
         let introTimer = 0;
         let selectedFood = null;
-        let cloudApp = null;
-        let cloudReadyPromise = null;
-        let bridgeReadyPromise = null;
 
         for (let i = 0; i < 8; i++) {
           const span = document.createElement('span');
@@ -727,130 +722,45 @@
           }
         }
 
-        function waitForCloudBase() {
-          if (typeof window.cloudbase !== 'undefined') return Promise.resolve();
-          return new Promise((resolve, reject) => {
-            const startedAt = Date.now();
-            const timer = window.setInterval(() => {
-              if (typeof window.cloudbase !== 'undefined') {
-                window.clearInterval(timer);
-                resolve();
-              } else if (Date.now() - startedAt > 8000) {
-                window.clearInterval(timer);
-                reject(new Error('CloudBase SDK 加载失败'));
-              }
-            }, 100);
-          });
-        }
+        async function saveChoiceViaApi(record) {
+          if (!apiEndpoint) throw new Error('CloudBase API 尚未配置');
 
-        function getCloudDatabase() {
-          if (!directBackendConfigured) {
-            return Promise.reject(new Error('CloudBase 尚未配置'));
-          }
-          if (!cloudReadyPromise) {
-            cloudReadyPromise = (async () => {
-              await waitForCloudBase();
-              if (!cloudApp) {
-                cloudApp = window.cloudbase.init({
-                  env: appConfig.cloudbaseEnvId,
-                  region: appConfig.cloudbaseRegion || 'ap-shanghai',
-                  accessKey: appConfig.cloudbaseAccessKey,
-                });
-              }
-              return cloudApp.rdb();
-            })();
-          }
-          return cloudReadyPromise.catch(error => {
-            cloudReadyPromise = null;
-            throw error;
-          });
-        }
-
-        function getBridgeFrame() {
-          if (!bridgeEndpoint) {
-            return Promise.reject(new Error('CloudBase 桥接页尚未配置'));
-          }
-          if (!bridgeReadyPromise) {
-            const ready = new Promise((resolve, reject) => {
-              const frame = document.createElement('iframe');
-              let settled = false;
-              let timer = 0;
-
-              function finish(error) {
-                if (settled) return;
-                settled = true;
-                window.clearTimeout(timer);
-                window.removeEventListener('message', receiveReady);
-                if (error) {
-                  frame.remove();
-                  reject(error);
-                } else {
-                  resolve(frame);
-                }
-              }
-
-              function receiveReady(event) {
-                if (event.origin !== bridgeEndpoint.origin || event.source !== frame.contentWindow) return;
-                const response = event.data;
-                if (!response || response.type !== 'liziqiu:bridge-ready') return;
-                finish(response.ok === true ? null : new Error('CloudBase 桥接页初始化失败'));
-              }
-
-              frame.title = 'CloudBase 保存桥接页';
-              frame.tabIndex = -1;
-              frame.setAttribute('aria-hidden', 'true');
-              frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-              frame.referrerPolicy = 'no-referrer';
-              frame.style.cssText = 'position:fixed;width:1px;height:1px;border:0;opacity:0;pointer-events:none;left:-9999px;';
-              frame.addEventListener('error', () => finish(new Error('CloudBase 桥接页加载失败')), { once: true });
-              window.addEventListener('message', receiveReady);
-              timer = window.setTimeout(() => finish(new Error('CloudBase 桥接页加载超时')), 8000);
-              frame.src = bridgeEndpoint.href;
-              document.body.append(frame);
+          const controller = new AbortController();
+          const timeout = window.setTimeout(() => controller.abort(), 12000);
+          try {
+            const response = await fetch(apiEndpoint.href, {
+              method: 'POST',
+              mode: 'cors',
+              credentials: 'omit',
+              cache: 'no-store',
+              redirect: 'error',
+              referrerPolicy: 'no-referrer',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(record),
+              signal: controller.signal,
             });
 
-            bridgeReadyPromise = ready.catch(error => {
-              bridgeReadyPromise = null;
-              throw error;
-            });
-          }
-          return bridgeReadyPromise;
-        }
-
-        async function saveChoiceViaBridge(record) {
-          const frame = await getBridgeFrame();
-          return new Promise((resolve, reject) => {
-            const timeout = window.setTimeout(() => {
-              cleanup();
-              reject(new Error('CloudBase 保存请求超时'));
-            }, 10000);
-
-            function cleanup() {
-              window.clearTimeout(timeout);
-              window.removeEventListener('message', receiveResponse);
-            }
-
-            function receiveResponse(event) {
-              if (event.origin !== bridgeEndpoint.origin || event.source !== frame.contentWindow) return;
-              const response = event.data;
-              if (!response || response.type !== 'liziqiu:save-choice-result' || response.requestId !== record.request_id) return;
-              cleanup();
-              if (response.ok === true) resolve();
-              else reject(new Error(typeof response.error === 'string' ? response.error : 'CloudBase 保存失败'));
-            }
-
-            window.addEventListener('message', receiveResponse);
+            let payload = null;
             try {
-              frame.contentWindow.postMessage({
-                type: 'liziqiu:save-choice',
-                requestId: record.request_id,
-                record,
-              }, bridgeEndpoint.origin);
+              payload = await response.json();
             } catch (error) {
-              cleanup();
-              reject(error);
+              payload = null;
             }
-          });
+
+            if (!response.ok || !payload || payload.ok !== true) {
+              throw new Error('服务端保存失败（' + response.status + '）');
+            }
+          } catch (error) {
+            if (error && error.name === 'AbortError') {
+              throw new Error('CloudBase 保存请求超时');
+            }
+            throw error;
+          } finally {
+            window.clearTimeout(timeout);
+          }
         }
 
         async function recordChoice(food, displayName) {
@@ -874,16 +784,7 @@
             return;
           }
 
-          if (bridgeEndpoint) {
-            await saveChoiceViaBridge(record);
-            return;
-          }
-
-          const db = await getCloudDatabase();
-          const result = await db.from(appConfig.cloudbaseTable || 'food_choices').insert(record);
-          if (result.error) {
-            throw new Error(result.error.message || '数据库写入失败');
-          }
+          await saveChoiceViaApi(record);
         }
 
         function selectFood(food) {

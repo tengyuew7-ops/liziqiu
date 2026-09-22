@@ -1,6 +1,6 @@
 -- Like or Love: food choice records for CloudBase PostgreSQL.
--- Browser visitors may insert one of the allowed foods, but cannot read,
--- update, or delete any rows through the public client role.
+-- Records are written by the CloudBase function with its server-side role.
+-- Browser roles have no direct table or sequence privileges.
 -- This migration is safe to run again. Existing rows are preserved.
 
 begin;
@@ -42,19 +42,20 @@ alter table public.food_choices enable row level security;
 revoke all on table public.food_choices from public, anon, authenticated;
 revoke all on sequence public.food_choices_id_seq from public, anon, authenticated;
 
-grant usage on schema public to anon, service_role;
-grant insert on table public.food_choices to anon;
-grant usage, select on sequence public.food_choices_id_seq to anon;
+grant usage on schema public to service_role;
 grant all on table public.food_choices to service_role;
 grant usage, select on sequence public.food_choices_id_seq to service_role;
 
 drop policy if exists "anonymous visitors can submit food choices"
   on public.food_choices;
 
-create policy "anonymous visitors can submit food choices"
+drop policy if exists "backend service can submit food choices"
+  on public.food_choices;
+
+create policy "backend service can submit food choices"
   on public.food_choices
   for insert
-  to anon
+  to service_role
   with check (true);
 
 comment on table public.food_choices is
