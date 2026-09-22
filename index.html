@@ -554,7 +554,18 @@
         const ctx = canvas.getContext('2d');
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
         const localPreview = appConfig.demoMode === true || location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /(?:\?|&)demo=1(?:&|$)/.test(location.search);
-        const backendConfigured = Boolean(appConfig.cloudbaseEnvId && appConfig.cloudbaseAccessKey);
+        const bridgeEndpoint = (() => {
+          if (typeof appConfig.cloudbaseBridgeUrl !== 'string' || !appConfig.cloudbaseBridgeUrl.trim()) return null;
+          try {
+            const endpoint = new URL(appConfig.cloudbaseBridgeUrl, location.href);
+            return endpoint.protocol === 'https:' ? endpoint : null;
+          } catch (error) {
+            console.error('CloudBase 桥接地址无效', error);
+            return null;
+          }
+        })();
+        const directBackendConfigured = Boolean(appConfig.cloudbaseEnvId && appConfig.cloudbaseAccessKey);
+        const backendConfigured = Boolean(bridgeEndpoint || directBackendConfigured);
         let raf = 0;
         let pieces = [];
         let confettiHearts = null;
@@ -563,6 +574,7 @@
         let selectedFood = null;
         let cloudApp = null;
         let cloudReadyPromise = null;
+        let bridgeReadyPromise = null;
 
         for (let i = 0; i < 8; i++) {
           const span = document.createElement('span');
@@ -705,7 +717,7 @@
           const key = 'liziqiu-visitor-id';
           try {
             let value = localStorage.getItem(key);
-            if (!value) {
+            if (!value || !/^[a-z0-9-]{1,80}$/.test(value)) {
               value = createId();
               localStorage.setItem(key, value);
             }
@@ -732,7 +744,7 @@
         }
 
         function getCloudDatabase() {
-          if (!backendConfigured) {
+          if (!directBackendConfigured) {
             return Promise.reject(new Error('CloudBase 尚未配置'));
           }
           if (!cloudReadyPromise) {
@@ -754,6 +766,93 @@
           });
         }
 
+        function getBridgeFrame() {
+          if (!bridgeEndpoint) {
+            return Promise.reject(new Error('CloudBase 桥接页尚未配置'));
+          }
+          if (!bridgeReadyPromise) {
+            const ready = new Promise((resolve, reject) => {
+              const frame = document.createElement('iframe');
+              let settled = false;
+              let timer = 0;
+
+              function finish(error) {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timer);
+                window.removeEventListener('message', receiveReady);
+                if (error) {
+                  frame.remove();
+                  reject(error);
+                } else {
+                  resolve(frame);
+                }
+              }
+
+              function receiveReady(event) {
+                if (event.origin !== bridgeEndpoint.origin || event.source !== frame.contentWindow) return;
+                const response = event.data;
+                if (!response || response.type !== 'liziqiu:bridge-ready') return;
+                finish(response.ok === true ? null : new Error('CloudBase 桥接页初始化失败'));
+              }
+
+              frame.title = 'CloudBase 保存桥接页';
+              frame.tabIndex = -1;
+              frame.setAttribute('aria-hidden', 'true');
+              frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+              frame.referrerPolicy = 'no-referrer';
+              frame.style.cssText = 'position:fixed;width:1px;height:1px;border:0;opacity:0;pointer-events:none;left:-9999px;';
+              frame.addEventListener('error', () => finish(new Error('CloudBase 桥接页加载失败')), { once: true });
+              window.addEventListener('message', receiveReady);
+              timer = window.setTimeout(() => finish(new Error('CloudBase 桥接页加载超时')), 8000);
+              frame.src = bridgeEndpoint.href;
+              document.body.append(frame);
+            });
+
+            bridgeReadyPromise = ready.catch(error => {
+              bridgeReadyPromise = null;
+              throw error;
+            });
+          }
+          return bridgeReadyPromise;
+        }
+
+        async function saveChoiceViaBridge(record) {
+          const frame = await getBridgeFrame();
+          return new Promise((resolve, reject) => {
+            const timeout = window.setTimeout(() => {
+              cleanup();
+              reject(new Error('CloudBase 保存请求超时'));
+            }, 10000);
+
+            function cleanup() {
+              window.clearTimeout(timeout);
+              window.removeEventListener('message', receiveResponse);
+            }
+
+            function receiveResponse(event) {
+              if (event.origin !== bridgeEndpoint.origin || event.source !== frame.contentWindow) return;
+              const response = event.data;
+              if (!response || response.type !== 'liziqiu:save-choice-result' || response.requestId !== record.request_id) return;
+              cleanup();
+              if (response.ok === true) resolve();
+              else reject(new Error(typeof response.error === 'string' ? response.error : 'CloudBase 保存失败'));
+            }
+
+            window.addEventListener('message', receiveResponse);
+            try {
+              frame.contentWindow.postMessage({
+                type: 'liziqiu:save-choice',
+                requestId: record.request_id,
+                record,
+              }, bridgeEndpoint.origin);
+            } catch (error) {
+              cleanup();
+              reject(error);
+            }
+          });
+        }
+
         async function recordChoice(food, displayName) {
           const record = {
             food_id: food.id,
@@ -772,6 +871,11 @@
             saved.push(record);
             localStorage.setItem(key, JSON.stringify(saved.slice(-30)));
             await new Promise(resolve => setTimeout(resolve, 420));
+            return;
+          }
+
+          if (bridgeEndpoint) {
+            await saveChoiceViaBridge(record);
             return;
           }
 
