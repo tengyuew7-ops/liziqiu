@@ -23,8 +23,8 @@ The application code never returns the credential to a caller or logs it.
 4. In HTTP Gateway, route the public food-choice endpoint to this function.
 5. Disable the gateway's own CORS validation for this route. The function
    handles CORS and only permits `https://tengyuew7-ops.github.io`.
-6. Run the updated `cloudbase-schema.sql` migration to remove direct anonymous
-   inserts before switching the website to this endpoint.
+6. Run the updated [`../schema.sql`](../schema.sql) migration to remove direct
+   anonymous inserts before switching the website to this endpoint.
 
 Do not deploy this code as a Web/HTTP cloud function. Keep the API Key only in
 the ordinary function's environment variables, and restrict console access to

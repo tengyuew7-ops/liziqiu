@@ -1,0 +1,11 @@
+{
+  "name": "liziqiu-like-or-love",
+  "version": "2.0.0",
+  "private": true,
+  "description": "粉色爱心动画与美食气泡选择网页。",
+  "license": "MIT",
+  "scripts": {
+    "test": "npm --prefix backend/cloudbase/function test",
+    "check": "node --check assets/js/app.js && node --check config.js && node --check backend/cloudbase/function/index.js && node --check backend/cloudbase/function/handler.js && node --check backend/cloudbase/function/validation.js"
+  }
+}

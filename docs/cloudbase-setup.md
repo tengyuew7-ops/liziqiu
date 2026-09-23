@@ -13,7 +13,7 @@ GitHub Pages
 
 ## 1. 创建表并收紧权限
 
-在“SQL 型数据库 → SQL 编辑器”中执行 [`cloudbase-schema.sql`](./cloudbase-schema.sql)。脚本可以重复执行，不会删除已有记录，也不会因表、索引或策略已存在而失败。它会：
+在“SQL 型数据库 → SQL 编辑器”中执行 [`backend/cloudbase/schema.sql`](../backend/cloudbase/schema.sql)。脚本可以重复执行，不会删除已有记录，也不会因表、索引或策略已存在而失败。它会：
 
 - 创建 `public.food_choices` 表和时间索引；
 - 限制可提交的 12 组 `food_id` 和美食名称；
@@ -25,7 +25,7 @@ GitHub Pages
 
 ## 2. 部署普通云函数
 
-函数代码位于 [`cloudbase-function`](./cloudbase-function/)，入口为 `index.main`。
+函数代码位于 [`backend/cloudbase/function`](../backend/cloudbase/function/)，入口为 `index.main`。
 
 1. 在 CloudBase 进入“云函数 / 托管 → 函数管理 → 创建云函数”。
 2. 选择“通过代码包创建”和“普通云函数”。
@@ -61,7 +61,7 @@ GitHub Pages 的 `fetch` 是非导航请求，不会出现 CloudBase 默认域�
 
 ## 4. GitHub Pages 配置
 
-[`config.js`](./config.js) 只保存公开 API 地址：
+[`config.js`](../config.js) 只保存公开 API 地址：
 
 ```js
 window.LIZIQIU_CONFIG = Object.freeze({
