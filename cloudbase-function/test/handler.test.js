@@ -1,6 +1,9 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
+const { readFileSync } = require('node:fs');
+const path = require('node:path');
 const { describe, it } = require('node:test');
 
 const {
@@ -9,7 +12,15 @@ const {
   createHandler,
 } = require('../handler');
 const { ALLOWED_FOODS, validateRecord } = require('../validation');
+
+const previousApiKey = process.env.CLOUDBASE_APIKEY;
+process.env.CLOUDBASE_APIKEY = 'unit-test-service-role-key';
 const functionEntry = require('../index');
+if (previousApiKey === undefined) {
+  delete process.env.CLOUDBASE_APIKEY;
+} else {
+  process.env.CLOUDBASE_APIKEY = previousApiKey;
+}
 
 function validRecord(overrides = {}) {
   return {
@@ -178,5 +189,44 @@ describe('HTTP gateway handler', () => {
     assert.deepEqual(readBody(result), { ok: false, code: 'STORAGE_UNAVAILABLE' });
     assert.doesNotMatch(result.body, /secret|hostname|SQL|DB_PRIVATE_CODE/i);
     assert.equal(logs.length, 1);
+  });
+});
+
+describe('CloudBase server credential', () => {
+  function coldStartWith(apiKey) {
+    const env = { ...process.env };
+    if (apiKey === undefined) {
+      delete env.CLOUDBASE_APIKEY;
+    } else {
+      env.CLOUDBASE_APIKEY = apiKey;
+    }
+    return spawnSync(process.execPath, ['-e', "require('./index')"], {
+      cwd: path.resolve(__dirname, '..'),
+      encoding: 'utf8',
+      env,
+    });
+  }
+
+  it('aborts module cold start when CLOUDBASE_APIKEY is absent or malformed', () => {
+    for (const value of [undefined, '', ' padded-secret ']) {
+      const result = coldStartWith(value);
+      const output = `${result.stdout}\n${result.stderr}`;
+
+      assert.notEqual(result.status, 0);
+      assert.match(output, /CLOUDBASE_APIKEY/);
+      if (value) {
+        assert.doesNotMatch(output, new RegExp(value.trim()));
+      }
+    }
+  });
+
+  it('reads only CLOUDBASE_APIKEY and passes it explicitly as accessKey', () => {
+    const source = readFileSync(path.resolve(__dirname, '..', 'index.js'), 'utf8');
+
+    assert.match(source, /process\.env\[API_KEY_ENV\]/);
+    assert.match(source, /const accessKey = requireApiKey\(\);/);
+    assert.match(source, /tcb\.init\(\{ accessKey \}\)/);
+    assert.doesNotMatch(source, /console\.(?:log|info|warn|error)/);
+    assert.deepEqual(Object.keys(functionEntry), ['main']);
   });
 });

@@ -3,16 +3,34 @@
 const { createHandler } = require('./handler');
 
 const TABLE_NAME = 'food_choices';
+const API_KEY_ENV = 'CLOUDBASE_APIKEY';
+
+function requireApiKey() {
+  const accessKey = process.env[API_KEY_ENV];
+  if (
+    typeof accessKey !== 'string' ||
+    accessKey.length === 0 ||
+    accessKey.trim() !== accessKey
+  ) {
+    throw new Error(`Missing or invalid required environment variable: ${API_KEY_ENV}`);
+  }
+  return accessKey;
+}
+
+// Validate the server-only credential during cold start. This makes a missing
+// or malformed deployment setting fail before the function accepts traffic.
+const accessKey = requireApiKey();
 let database;
+
+function initializeDatabase(tcb) {
+  const app = tcb.init({ accessKey });
+  return app.rdb();
+}
 
 function getDatabase() {
   if (!database) {
     const tcb = require('@cloudbase/node-sdk');
-    // In an ordinary CloudBase function, node-sdk 3.x resolves the current
-    // function environment and its injected server credentials when env is
-    // omitted. This keeps PostgreSQL writes on the server-side service role.
-    const app = tcb.init({});
-    database = app.rdb();
+    database = initializeDatabase(tcb);
   }
   return database;
 }
