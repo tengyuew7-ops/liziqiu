@@ -5,13 +5,12 @@
   "description": "CloudBase function that stores validated food choices.",
   "main": "index.js",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "test": "node --test"
   },
   "dependencies": {
-    "@cloudbase/js-sdk": "3.10.0",
-    "@cloudbase/signature-nodejs": "2.2.0"
+    "@cloudbase/node-sdk": "3.18.3"
   }
 }

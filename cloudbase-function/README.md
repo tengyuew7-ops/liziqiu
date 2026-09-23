@@ -1,8 +1,10 @@
 # Food choice CloudBase function
 
-This directory is an ordinary CloudBase function for Node.js 18. Its entry is
-`index.main`. CloudBase supplies the current environment credentials, so the
-function contains no API key or Publishable Key.
+This directory is an ordinary CloudBase function for the Node.js 20 runtime.
+Its entry is `index.main`. It uses `@cloudbase/node-sdk` 3.18.3 and calls
+`tcb.init({})`; node-sdk resolves the current function environment and reads the
+server credentials injected into an ordinary event function. The function
+contains no API key or Publishable Key.
 
 ## Deploy
 
@@ -15,6 +17,9 @@ function contains no API key or Publishable Key.
    handles CORS and only permits `https://tengyuew7-ops.github.io`.
 5. Run the updated `cloudbase-schema.sql` migration to remove direct anonymous
    inserts before switching the website to this endpoint.
+
+Do not deploy this code as a Web/HTTP cloud function. That runtime does not
+inject the ordinary function credentials used by `@cloudbase/node-sdk`.
 
 Supported requests:
 

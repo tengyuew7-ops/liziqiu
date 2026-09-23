@@ -7,8 +7,11 @@ let database;
 
 function getDatabase() {
   if (!database) {
-    const cloudbase = require('@cloudbase/js-sdk');
-    const app = cloudbase.init({ env: cloudbase.SYMBOL_CURRENT_ENV });
+    const tcb = require('@cloudbase/node-sdk');
+    // In an ordinary CloudBase function, node-sdk 3.x resolves the current
+    // function environment and its injected server credentials when env is
+    // omitted. This keeps PostgreSQL writes on the server-side service role.
+    const app = tcb.init({});
     database = app.rdb();
   }
   return database;

@@ -9,7 +9,7 @@ GitHub Pages
                             └─ PostgreSQL public.food_choices
 ```
 
-浏览器不包含 Publishable Key、API Key、数据库密码或腾讯云密钥。云函数在同一 CloudBase 环境中使用平台注入的临时服务端凭据。
+浏览器不包含 Publishable Key、API Key、数据库密码或腾讯云密钥。普通云函数使用 `@cloudbase/node-sdk` 3.18.3；`tcb.init({})` 自动选择当前函数环境，并读取平台注入的临时服务端凭据。
 
 ## 1. 创建表并收紧权限
 
@@ -33,6 +33,8 @@ GitHub Pages
 4. 上传代码包，开启“自动安装依赖”。
 
 函数仅接受来自 `https://tengyuew7-ops.github.io` 的 `POST` 与 CORS 预检，并在写入前再次校验全部 8 个字段和 12 组美食映射。
+
+这里必须使用“普通云函数”，不要改成 Web/HTTP 云函数。普通云函数会注入服务端凭据，让 `@cloudbase/node-sdk` 以服务端角色写入；HTTP 网关只负责把公开路由转发给该普通云函数。
 
 ## 3. 创建 HTTP 网关路由
 
