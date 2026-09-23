@@ -3,6 +3,8 @@
 const { createHandler } = require('./handler');
 
 const TABLE_NAME = 'food_choices';
+const ENV_ID = 'lzq0914-d7gfrsujmf7f25a7b';
+const SCHEMA_NAME = 'public';
 const API_KEY_ENV = 'CLOUDBASE_APIKEY';
 
 function requireApiKey() {
@@ -23,8 +25,8 @@ const accessKey = requireApiKey();
 let database;
 
 function initializeDatabase(tcb) {
-  const app = tcb.init({ accessKey });
-  return app.rdb();
+  const app = tcb.init({ env: ENV_ID, accessKey });
+  return app.rdb({ database: SCHEMA_NAME });
 }
 
 function getDatabase() {

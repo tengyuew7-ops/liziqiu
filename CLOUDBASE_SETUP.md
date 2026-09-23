@@ -9,7 +9,7 @@ GitHub Pages
                             └─ PostgreSQL public.food_choices
 ```
 
-浏览器不包含 Publishable Key、API Key、数据库密码或腾讯云密钥。普通云函数使用 `@cloudbase/node-sdk` 3.18.3，并只从云函数环境变量 `CLOUDBASE_APIKEY` 读取 PostgreSQL `service_role` API Key，再通过 `tcb.init({ accessKey })` 初始化。应用代码不会把密钥写入代码包、Git 仓库、响应或日志。
+浏览器不包含 Publishable Key、API Key、数据库密码或腾讯云密钥。普通云函数使用 `@cloudbase/node-sdk` 3.18.3，并只从 CloudBase 在运行时注入的 `CLOUDBASE_APIKEY` 读取 PostgreSQL `service_role` API Key，再通过 `tcb.init({ env, accessKey })` 连接指定环境，并用 `app.rdb({ database: 'public' })` 明确选择业务表所在的 schema。应用代码不会把密钥写入代码包、Git 仓库、响应或日志。
 
 ## 1. 创建表并收紧权限
 
@@ -31,7 +31,7 @@ GitHub Pages
 2. 选择“通过代码包创建”和“普通云函数”。
 3. 函数名填写 `liziqiu-choice-submit`，运行环境选择 Node.js 20，执行方法使用 `index.main`。
 4. 上传代码包，开启“自动安装依赖”。
-5. 在函数配置的“环境变量”中新增 `CLOUDBASE_APIKEY`，值填写 PostgreSQL API Key 管理页中角色为 `service_role` 的 API Key。不要把该值粘贴到代码、配置文件或日志中，并限制函数配置的控制台访问权限。
+5. 在函数配置中开启“API Key 设置”，选择 PostgreSQL API Key 管理页中角色为 `service_role` 的密钥。CloudBase 会把它作为 `CLOUDBASE_APIKEY` 注入函数运行环境，无需复制明文。不要把该值粘贴到代码、配置文件或日志中，并限制函数配置的控制台访问权限。
 
 函数仅接受来自 `https://tengyuew7-ops.github.io` 的 `POST` 与 CORS 预检，并在写入前再次校验全部 8 个字段和 12 组美食映射。
 

@@ -220,12 +220,17 @@ describe('CloudBase server credential', () => {
     }
   });
 
-  it('reads only CLOUDBASE_APIKEY and passes it explicitly as accessKey', () => {
+  it('passes CLOUDBASE_APIKEY and the target environment explicitly to the SDK', () => {
     const source = readFileSync(path.resolve(__dirname, '..', 'index.js'), 'utf8');
 
     assert.match(source, /process\.env\[API_KEY_ENV\]/);
     assert.match(source, /const accessKey = requireApiKey\(\);/);
-    assert.match(source, /tcb\.init\(\{ accessKey \}\)/);
+    assert.match(source, /const ENV_ID = 'lzq0914-d7gfrsujmf7f25a7b';/);
+    assert.match(source, /const SCHEMA_NAME = 'public';/);
+    assert.match(source, /tcb\.init\(\{ env: ENV_ID, accessKey \}\)/);
+    assert.match(source, /app\.rdb\(\{ database: SCHEMA_NAME \}\)/);
+    assert.doesNotMatch(source, /tcb\.init\(\{ accessKey \}\)/);
+    assert.doesNotMatch(source, /return app\.rdb\(\);/);
     assert.doesNotMatch(source, /console\.(?:log|info|warn|error)/);
     assert.deepEqual(Object.keys(functionEntry), ['main']);
   });
