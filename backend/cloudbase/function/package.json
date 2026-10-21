@@ -11,6 +11,6 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@cloudbase/node-sdk": "3.18.3"
+    "@cloudbase/node-sdk": "3.18.7"
   }
 }
